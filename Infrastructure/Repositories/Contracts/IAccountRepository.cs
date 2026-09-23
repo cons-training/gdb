@@ -1,15 +1,16 @@
-﻿using gdb.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GDB.App.Domain.Models;
 
-namespace gdb.Infrastructure.Repositories.Contracts
+namespace GDB.App.Infrastructure.Repositories.Contracts
 {
-    internal interface IAccountRepository
+    public interface IAccountRepository
     {
         IAccount GetAccount(string accountNumber);
+        void CloseAccount(string accountNumber);
+        void SaveAccount(IAccount account, string pin);
         List<IAccount> GetAllAccounts();
+        void SaveAccounts(IAccount fromAccount, IAccount toAccount);
+        void ChangePin(string accountNumber, string oldPin, string newPin);
+        void UpdateBalance(string accountNumber, decimal balance);
+
     }
 }

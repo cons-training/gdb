@@ -1,31 +1,39 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using gdb.Infrastructure.Repositories.Contracts;
-using gdb.Infrastructure.Repositories.Implementations;
+﻿using GDB.App.Infrastructure.Repositories.Contracts;
+using GDB.App.Infrastructure.Repositories.Implementations;
 
-
-namespace gdb.Infrastructure.Repositories
+namespace GDB.App.Infrastructure.Repositories
 {
-    internal class AccountRepositoryFactory
+    class AccountRepositoryFactory
     {
-        
+
+
+
         public static IAccountRepository Create(string choice)
         {
-            if (string.IsNullOrWhiteSpace(choice))
-                throw new ArgumentException("choice is required", nameof(choice));
 
-            //if (choice.Equals("DB", StringComparison.OrdinalIgnoreCase))
-            //    return new AccountRepositoryDB();
 
-            if (choice.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
-                return new AccountRepositoryInMemory();
+            IAccountRepository repository = null;
 
-            throw new ArgumentException($"Unknown repository choice: {choice}", nameof(choice));
+
+            if (choice.Equals("DB"))
+
+                repository = new AccountRepositoryDB();
+
+            else if (choice.Equals("InMemory"))
+
+                repository = new AccountRepositoryInMemory();
+
+
+            return repository;
+
         }
 
     }
 }
+
+
+
+
+
+
+

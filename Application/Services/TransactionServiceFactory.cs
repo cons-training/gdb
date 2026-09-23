@@ -3,11 +3,12 @@ using GDB.App.Application.Services.Implementations;
 
 namespace GDB.App.Application.Services
 {
-    internal class AccountServiceFactory
+    internal class TransactionServiceFactory
     {
-        public static IAccountService Create()
+
+        public static ITransactionService Create()
         {
-            return new AccountService();
+            return new TransactionService();
         }
     }
 }

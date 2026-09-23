@@ -1,6 +1,4 @@
-using System;
-
-namespace gdb.Domain.Exceptions
+﻿namespace GDB.App.Domain.Exceptions
 {
     /// <summary>
     /// Purpose: Base domain exception for all banking and account-related operations in Global Digital Bank.

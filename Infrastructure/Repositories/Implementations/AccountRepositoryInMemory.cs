@@ -1,129 +1,244 @@
-﻿using gdb.Data;
-using gdb.Domain;
-using gdb.Domain.Enums;
-using gdb.Domain.Exceptions;
-using gdb.Domain.Models;
-using gdb.Infrastructure.Repositories.Contracts;
-using gdb.Infrastructure.Repositories.Implementations;
-using System;
-using System.Collections.Generic;
+﻿using GDB.App.Data;
+using GDB.App.Domain;
+using GDB.App.Domain.Enums;
+using GDB.App.Domain.Models;
+using GDB.App.Infrastructure.Repositories.Contracts;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace gdb.Infrastructure.Repositories.Implementations
+namespace GDB.App.Infrastructure.Repositories.Implementations
 {
     internal class AccountRepositoryInMemory : IAccountRepository
     {
 
-        private readonly DataSet _dataSet;
+
+        private static DataSet _dataSet;
 
         public AccountRepositoryInMemory()
         {
-            _dataSet = AccountStore.CreateDataSet();
+
+            if (_dataSet == null)
+            {
+                _dataSet = GDBInMemoryDB.CreateDataSet();
+            }
+
         }
 
-        public IAccount GetLastTransaction(string accountNumber)
+        public IAccount GetAccount(string accountNumber)
         {
-            return GetAccount(accountNumber);
-        }
+            //return new SavingsAccount(accountNumber,"Hasini",21,100000m,AccountType.Savings,AccountStatus.Active, "1234", AccountPrivilege.Gold,1000m,4);
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
 
+            DataRow row = accountTable.Select($"AccountNumber = '{accountNumber}'").FirstOrDefault();
+
+            if (row == null)
+            {
+                return null;
+            }
+
+            // Get values from DataSet
+            string number = row["AccountNumber"].ToString();
+            string name = row["Name"].ToString();
+            int age = Convert.ToInt32(row["Age"]);
+            decimal balance = Convert.ToDecimal(row["Balance"]);
+
+            string type = row["AccountType"].ToString();
+            string status = row["Status"].ToString();
+
+            string pin = row["Pin"].ToString();
+            string privilage = row["Privilage"].ToString();
+
+
+            // Convert AccountType string to enum
+            AccountType accountType = type switch
+            {
+                "Savings" => AccountType.Savings,
+                "Current" => AccountType.Current,
+                "Salary" => AccountType.Salary,
+                "FixedDeposit" => AccountType.FixedDeposit,
+                _ => throw new Exception("Invalid account type")
+            };
+
+            // Convert Status string to enum
+            AccountStatus accountStatus = status switch
+            {
+                "Active" => AccountStatus.Active,
+                "Inactive" => AccountStatus.Inactive,
+                "Frozen" => AccountStatus.Frozen,
+                _ => throw new Exception("Invalid account status")
+            };
+
+            // Convert Privilege string to enum
+            AccountPrivilege privilege = privilage switch
+            {
+                "Gold" => AccountPrivilege.Gold,
+                "Silver" => AccountPrivilege.Silver,
+                "Premium" => AccountPrivilege.Premium,
+                _ => throw new Exception("Invalid account privilege")
+            };
+
+            // Create the correct Account object
+            IAccount account = AccountFactory.CreateAccount(
+                accountType,
+                number,
+                name,
+                age,
+                balance,
+                accountStatus,
+                pin,
+                privilege
+            );
+
+            return account;
+        }
+        public void SaveAccounts(IAccount fromAccount, IAccount toAccount)
+        {
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
+
+            DataRow fromRow = accountTable.Rows.Find(fromAccount.AccountNumber);
+            DataRow toRow = accountTable.Rows.Find(toAccount.AccountNumber);
+
+            if (fromRow == null || toRow == null)
+            {
+                throw new Exception("Account not found");
+            }
+
+            // No withdrawal/deposit logic here.
+            // Just take the already updated values from the objects.
+
+            fromRow["Balance"] = fromAccount.Balance;
+            toRow["Balance"] = toAccount.Balance;
+        }
         public List<IAccount> GetAllAccounts()
         {
             List<IAccount> accounts = new List<IAccount>();
 
-            // 1. Get the ACCOUNT table
-            DataTable accountTable = _dataSet.Tables["ACCOUNT"]!;
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
 
-            // 2. Iterate through each row in the table
             foreach (DataRow row in accountTable.Rows)
             {
-                // 3. Read values from the row
-                string number = row["AccountNumber"].ToString()!;
-                string name = row["Name"].ToString()!;
+                string number = row["AccountNumber"].ToString();
+                string name = row["Name"].ToString();
                 int age = Convert.ToInt32(row["Age"]);
                 decimal balance = Convert.ToDecimal(row["Balance"]);
 
-                AccountType accountType = Enum.Parse<AccountType>(row["AccountType"].ToString()!);
+                string type = row["AccountType"].ToString();
+                string status = row["Status"].ToString();
 
-                AccountStatus status =
-                   Enum.Parse<AccountStatus>(row["Status"].ToString()!);
+                string pin = row["Pin"].ToString();
+                string privilegeValue = row["Privilage"].ToString();
 
-                AccountPrivilege privilege =
-                   Enum.Parse<AccountPrivilege>(row["Privilege"].ToString()!);
+                AccountType accountType = type switch
+                {
+                    "Savings" => AccountType.Savings,
+                    "Current" => AccountType.Current,
+                    "Salary" => AccountType.Salary,
+                    "FixedDeposit" => AccountType.FixedDeposit,
+                    _ => throw new Exception("Invalid account type")
+                };
 
-                string pin = row["PIN"].ToString()!;
+                AccountStatus accountStatus = status switch
+                {
+                    "Active" => AccountStatus.Active,
+                    "Inactive" => AccountStatus.Inactive,
+                    "Frozen" => AccountStatus.Frozen,
+                    _ => throw new Exception("Invalid account status")
+                };
 
-                // 4. Create the correct account object using AccountFactory
-                Account account = AccountFactory.CreateAccount(
-                   accountType,
-                   number,
-                   name,
-                   age,
-                   balance,
-                   status,
-                   privilege,
-                   pin);
+                AccountPrivilege privilege = privilegeValue switch
+                {
+                    "Gold" => AccountPrivilege.Gold,
+                    "Silver" => AccountPrivilege.Silver,
+                    "Premium" => AccountPrivilege.Premium,
+                    _ => throw new Exception("Invalid account privilege")
+                };
 
-                // 5. Add it to the list
+                IAccount account = AccountFactory.CreateAccount(
+                    accountType,
+                    number,
+                    name,
+                    age,
+                    balance,
+                    accountStatus,
+                    pin,
+                    privilege
+                );
+
                 accounts.Add(account);
             }
 
             return accounts;
         }
-
-        public IAccount GetAccount(string accountNumber)
+        public void CloseAccount(string accountNumber)
         {
-            // 1. Get the ACCOUNT table
-            DataTable accountTable = _dataSet.Tables["ACCOUNT"]!;
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
 
-            // 2. Find the account row by AccountNumber
-            DataRow[] rows = accountTable.Select(
-               $"AccountNumber = '{accountNumber}'");
+            DataRow row = accountTable.Rows.Find(accountNumber);
 
-            // Account not found
-            if (rows.Length == 0)
+            if (row == null)
+                throw new Exception("Account not found.");
+
+            string currentStatus = row["Status"].ToString();
+
+            if (currentStatus == "Closed")
+                throw new Exception("Account is already closed.");
+
+            row["Status"] = "Closed";
+        }
+        public void SaveAccount(IAccount account, string pin)
+        {
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
+
+            DataRow row = accountTable.Rows.Find(account.AccountNumber);
+
+            if (row == null)
             {
-               throw new AccountException("Account not found");
+                throw new Exception("Account not found");
             }
 
-            DataRow row = rows[0];
-            if(row == null)
+            row["Balance"] = account.Balance;
+        }
+
+        public void UpdateBalance(string accountNumber, decimal balance)
+        {
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
+
+            DataRow row = accountTable.Rows.Find(accountNumber);
+
+            if (row == null)
             {
-                throw new AccountException("Account not found");
+                throw new Exception("Account not found");
             }
 
-            // 3. Read values from the row
-            string number = row["AccountNumber"].ToString()!;
-            string name = row["Name"].ToString()!;
-            int age = Convert.ToInt32(row["Age"]);
-            decimal balance = Convert.ToDecimal(row["Balance"]);
+            row["Balance"] = balance;
+        }
+        public void ChangePin(string accountNumber, string oldPin, string newPin)
+        {
+            DataTable accountTable = _dataSet.Tables["ACCOUNT"];
 
-            AccountType accountType = Enum.Parse<AccountType>(row["AccountType"].ToString()!);
+            DataRow row = accountTable.Rows.Find(accountNumber);
 
-            AccountStatus status =
-               Enum.Parse<AccountStatus>(row["Status"].ToString()!);
+            if (row == null)
+            {
+                throw new Exception("Account not found.");
+            }
 
-            AccountPrivilege privilege =
-               Enum.Parse<AccountPrivilege>(row["Privilege"].ToString()!);
+            string currentPin = row["Pin"].ToString();
 
-            string pin = row["PIN"].ToString()!;
+            if (currentPin != oldPin)
+            {
+                throw new Exception("Account not found or current PIN is incorrect.");
+            }
 
-            // 4. Create the correct account object using AccountFactory
-            Account account = AccountFactory.CreateAccount(
-               accountType,
-               number,
-               name,
-               age,
-               balance,
-               status,
-               privilege,
-               pin);
+            if (newPin == null || newPin.Length != 4)
+            {
+                throw new Exception("Invalid new PIN.");
+            }
 
-            // 5. Return it as IAccount
-            return account;
-
+            row["Pin"] = newPin;
         }
     }
+
+
 }
+

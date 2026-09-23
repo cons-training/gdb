@@ -1,23 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using gdb.Domain.Enums;
-using gdb.Domain.Exceptions;
+﻿using GDB.App.Domain.Enums;
+using GDB.App.Domain.Exceptions;
 
-namespace gdb.Domain.Models
+
+namespace GDB.App.Domain.Models
 {
     public class FixedDepositAccount : Account
     {
         private int _tenureMonths;
-        private double interestRate;
+        private double _interestRate;
 
-        public FixedDepositAccount(string accountNumber, string name, int age, decimal balance, AccountStatus status, AccountPrivilege privilege, string pin, int tenureMonths = 12, double interestRate = 6.5)
-            : base(accountNumber, name, age, balance, Enums.AccountType.FIXED_DEPOSIT, status, privilege, pin)
+        public FixedDepositAccount(string accountNumber, string name, int age, decimal balance, AccountType accountType, AccountStatus status, string pin, AccountPrivilege privilege, int tenureMonths = 12, double interestRate = 6.5)
+            : base(accountNumber, name, age, balance, accountType, status, pin, privilege)
         {
             this._tenureMonths = tenureMonths;
-            this.interestRate = interestRate;
+            this._interestRate = interestRate;
         }
 
         public override void ProcessDebit(decimal amount)
@@ -25,8 +21,8 @@ namespace gdb.Domain.Models
             throw new AccountException("Premature withdrawal not permitted on Fixed Deposit Account");
         }
 
-        public decimal CalculateMaturityAmount() => _balance * (decimal)Math.Pow(1 + interestRate / 100.0 / 12, 12 * (_tenureMonths / 12.0));
+        public decimal CalculateMaturityAmount() => _balance * (decimal)Math.Pow(1 + (_interestRate / 100.0) / 12, 12 * (_tenureMonths / 12.0));
         public int TenureMonths => _tenureMonths;
-        public double InterestRate => interestRate;
+        public double InterestRate => _interestRate;
     }
 }

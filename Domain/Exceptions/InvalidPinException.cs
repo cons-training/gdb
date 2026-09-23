@@ -1,9 +1,7 @@
-using System;
-
-namespace gdb.Domain.Exceptions
+﻿namespace GDB.App.Domain.Exceptions
 {
     /// <summary>
-    /// Purpose: Thrown when entered _pin does not match account _pin.
+    /// Purpose: Thrown when entered PIN does not match account PIN.
     /// </summary>
     public class InvalidPinException : AccountException
     {
