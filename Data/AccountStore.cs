@@ -1,14 +1,15 @@
-﻿using System.Data;
+﻿using gdb.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace GDB.App.Data
+namespace gdb.Data
 {
-    /// <summary>
-    /// Factory for creating the in-memory GDB DataSet.
-    /// The schema matches the current Domain Account classes.
-    /// </summary>
-    public static class GDBInMemoryDB
+    internal class AccountStore
     {
-
         public static DataSet CreateDataSet()
         {
             var ds = new DataSet("GDBDataSet");
@@ -20,316 +21,151 @@ namespace GDB.App.Data
             CreateFixedDepositTable(ds);
             CreateSalaryTable(ds);
 
-            // Create relationships
+            // Create relationships (foreign-key-like DataRelations)
             CreateRelations(ds);
 
-            // Populate sample data
+            // Populate realistic sample data (Indian banking context, INR, example account numbers)
             PopulateSampleData(ds);
 
             return ds;
         }
 
-
-        // =========================================================
-        // ACCOUNT
-        // =========================================================
-
+        // ACCOUNT table (master)
         private static void CreateAccountTable(DataSet ds)
         {
-            var dt = new DataTable("ACCOUNT");
+            // Main ACCOUNT table
+            DataTable accountTable = new DataTable("ACCOUNT");
 
-            var dcAccountNumber =
-                new DataColumn("AccountNumber", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 32
-                };
+            DataColumn accountId = accountTable.Columns.Add("AccountId", typeof(long));
+            accountId.AutoIncrement = true;
+            accountId.AutoIncrementSeed = 1;
+            accountId.AutoIncrementStep = 1;
+            accountId.AllowDBNull = false;
+            accountTable.PrimaryKey = new DataColumn[] { accountId };
 
-            var dcName =
-                new DataColumn("Name", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 100
-                };
+            accountTable.Columns.Add("AccountNumber", typeof(string));
+            accountTable.Columns.Add("Name", typeof(string));
+            accountTable.Columns.Add("Age", typeof(int));
+            accountTable.Columns.Add("AccountType", typeof(string));
+            accountTable.Columns.Add("Balance", typeof(decimal));
+            accountTable.Columns.Add("Status", typeof(string));
+            accountTable.Columns.Add("Privilege", typeof(string));
+            accountTable.Columns.Add("PIN", typeof(string));
 
-            var dcAge =
-                new DataColumn("Age", typeof(int))
-                {
-                    AllowDBNull = false
-                };
-
-            var dcBalance =
-                new DataColumn("Balance", typeof(decimal))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 0.00m
-                };
-
-            var dcAccountType =
-                new DataColumn("AccountType", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 32
-                };
-
-            var dcStatus =
-                new DataColumn("Status", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 32
-                };
-
-            var dcPin =
-                new DataColumn("Pin", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 4
-                };
-
-            var dcPrivilage =
-                new DataColumn("Privilage", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 32
-                };
-
-
-            dt.Columns.Add(dcAccountNumber);
-            dt.Columns.Add(dcName);
-            dt.Columns.Add(dcAge);
-            dt.Columns.Add(dcBalance);
-            dt.Columns.Add(dcAccountType);
-            dt.Columns.Add(dcStatus);
-            dt.Columns.Add(dcPin);
-            dt.Columns.Add(dcPrivilage);
-
-            // AccountNumber acts as the primary key
-            dt.PrimaryKey = new[] { dcAccountNumber };
-
-            ds.Tables.Add(dt);
+            // Add table to DataSet
+            ds.Tables.Add(accountTable);
         }
 
-
-        // =========================================================
-        // SAVINGS ACCOUNT
-        // =========================================================
-
+        // SAVINGS_ACCOUNT (specialized)
         private static void CreateSavingsTable(DataSet ds)
         {
             var dt = new DataTable("SAVINGS_ACCOUNT");
+            var dcAccountId = new DataColumn("AccountId", typeof(long)) { AllowDBNull = false };
+            var dcInterestRate = new DataColumn("InterestRate", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.035m };
+            var dcMinimumBalance = new DataColumn("MinimumBalance", typeof(decimal)) { AllowDBNull = false, DefaultValue = 1000.00m };
+            var dcWithdrawalLimit = new DataColumn("WithdrawalLimit", typeof(int)) { AllowDBNull = false, DefaultValue = 6 };
 
-            var dcAccountNumber =
-                new DataColumn("AccountNumber", typeof(string))
-                {
-                    AllowDBNull = false
-                };
-
-            var dcMinBalance =
-                new DataColumn("MinBalance", typeof(decimal))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 1000.00m
-                };
-
-            var dcInterestRate =
-                new DataColumn("InterestRate", typeof(double))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 4.0
-                };
-
-
-            dt.Columns.Add(dcAccountNumber);
-            dt.Columns.Add(dcMinBalance);
+            dt.Columns.Add(dcAccountId);
             dt.Columns.Add(dcInterestRate);
+            dt.Columns.Add(dcMinimumBalance);
+            dt.Columns.Add(dcWithdrawalLimit);
 
-            dt.PrimaryKey = new[] { dcAccountNumber };
+            dt.PrimaryKey = new[] { dcAccountId };
 
             ds.Tables.Add(dt);
         }
 
-
-        // =========================================================
-        // CURRENT ACCOUNT
-        // =========================================================
-
+        // CURRENT_ACCOUNT (specialized)
         private static void CreateCurrentTable(DataSet ds)
         {
             var dt = new DataTable("CURRENT_ACCOUNT");
+            var dcAccountId = new DataColumn("AccountId", typeof(long)) { AllowDBNull = false };
+            var dcOverdraftLimit = new DataColumn("OverdraftLimit", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.00m };
+            var dcInterestRate = new DataColumn("InterestRate", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.0m };
+            var dcMinimumBalance = new DataColumn("MinimumBalance", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.00m };
 
-            var dcAccountNumber =
-                new DataColumn("AccountNumber", typeof(string))
-                {
-                    AllowDBNull = false
-                };
-
-            var dcOverdraftLimit =
-                new DataColumn("OverdraftLimit", typeof(decimal))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 25000.00m
-                };
-
-
-            dt.Columns.Add(dcAccountNumber);
+            dt.Columns.Add(dcAccountId);
             dt.Columns.Add(dcOverdraftLimit);
+            dt.Columns.Add(dcInterestRate);
+            dt.Columns.Add(dcMinimumBalance);
 
-            dt.PrimaryKey = new[] { dcAccountNumber };
+            dt.PrimaryKey = new[] { dcAccountId };
 
             ds.Tables.Add(dt);
         }
 
-
-        // =========================================================
-        // FIXED DEPOSIT ACCOUNT
-        // =========================================================
-
+        // FIXED_DEPOSIT_ACCOUNT (specialized)
         private static void CreateFixedDepositTable(DataSet ds)
         {
             var dt = new DataTable("FIXED_DEPOSIT_ACCOUNT");
+            var dcAccountId = new DataColumn("AccountId", typeof(long)) { AllowDBNull = false };
+            var dcPrincipalAmount = new DataColumn("PrincipalAmount", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.00m };
+            var dcInterestRate = new DataColumn("InterestRate", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.06m };
+            var dcStartDate = new DataColumn("StartDate", typeof(DateTime)) { AllowDBNull = false, DefaultValue = DateTime.UtcNow };
+            var dcMaturityDate = new DataColumn("MaturityDate", typeof(DateTime)) { AllowDBNull = false };
+            var dcMaturityAmount = new DataColumn("MaturityAmount", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.00m };
+            var dcTenureMonths = new DataColumn("TenureMonths", typeof(int)) { AllowDBNull = false, DefaultValue = 12 };
+            var dcAutoRenew = new DataColumn("AutoRenew", typeof(bool)) { AllowDBNull = false, DefaultValue = false };
 
-            var dcAccountNumber =
-                new DataColumn("AccountNumber", typeof(string))
-                {
-                    AllowDBNull = false
-                };
-
-            var dcTenureMonths =
-                new DataColumn("TenureMonths", typeof(int))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 12
-                };
-
-            var dcInterestRate =
-                new DataColumn("InterestRate", typeof(double))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 6.5
-                };
-
-
-            dt.Columns.Add(dcAccountNumber);
-            dt.Columns.Add(dcTenureMonths);
+            dt.Columns.Add(dcAccountId);
+            dt.Columns.Add(dcPrincipalAmount);
             dt.Columns.Add(dcInterestRate);
+            dt.Columns.Add(dcStartDate);
+            dt.Columns.Add(dcMaturityDate);
+            dt.Columns.Add(dcMaturityAmount);
+            dt.Columns.Add(dcTenureMonths);
+            dt.Columns.Add(dcAutoRenew);
 
-            dt.PrimaryKey = new[] { dcAccountNumber };
+            dt.PrimaryKey = new[] { dcAccountId };
 
             ds.Tables.Add(dt);
         }
 
-
-        // =========================================================
-        // SALARY ACCOUNT
-        // =========================================================
-
+        // SALARY_ACCOUNT (specialized)
+        // Note: Employer table removed per request. EmployerId remains as an integer column.
         private static void CreateSalaryTable(DataSet ds)
         {
             var dt = new DataTable("SALARY_ACCOUNT");
+            var dcAccountId = new DataColumn("AccountId", typeof(long)) { AllowDBNull = false };
+            var dcEmployerId = new DataColumn("EmployerId", typeof(int)) { AllowDBNull = false };
+            var dcEmployeeId = new DataColumn("EmployeeId", typeof(string)) { AllowDBNull = false, MaxLength = 64 };
+            var dcSalaryCreditDay = new DataColumn("SalaryCreditDay", typeof(int)) { AllowDBNull = false, DefaultValue = 1 };
+            var dcSalaryAmount = new DataColumn("SalaryAmount", typeof(decimal)) { AllowDBNull = false, DefaultValue = 0.00m };
 
-            var dcAccountNumber =
-                new DataColumn("AccountNumber", typeof(string))
-                {
-                    AllowDBNull = false
-                };
+            dt.Columns.Add(dcAccountId);
+            dt.Columns.Add(dcEmployerId);
+            dt.Columns.Add(dcEmployeeId);
+            dt.Columns.Add(dcSalaryCreditDay);
+            dt.Columns.Add(dcSalaryAmount);
 
-            var dcEmployerName =
-                new DataColumn("EmployerName", typeof(string))
-                {
-                    AllowDBNull = false,
-                    MaxLength = 100
-                };
-
-            var dcInactiveMonths =
-                new DataColumn("InactiveMonths", typeof(int))
-                {
-                    AllowDBNull = false,
-                    DefaultValue = 0
-                };
-
-
-            dt.Columns.Add(dcAccountNumber);
-            dt.Columns.Add(dcEmployerName);
-            dt.Columns.Add(dcInactiveMonths);
-
-            dt.PrimaryKey = new[] { dcAccountNumber };
+            dt.PrimaryKey = new[] { dcAccountId };
 
             ds.Tables.Add(dt);
         }
 
-
-        // =========================================================
-        // RELATIONSHIPS
-        // =========================================================
-
+        // Create DataRelations to mimic FKs between ACCOUNT and specialized tables only.
         private static void CreateRelations(DataSet ds)
         {
-            AddRelation(
-                ds,
-                "AccountSavings",
-                "ACCOUNT",
-                "AccountNumber",
-                "SAVINGS_ACCOUNT",
-                "AccountNumber");
-
-            AddRelation(
-                ds,
-                "AccountCurrent",
-                "ACCOUNT",
-                "AccountNumber",
-                "CURRENT_ACCOUNT",
-                "AccountNumber");
-
-            AddRelation(
-                ds,
-                "AccountFixedDeposit",
-                "ACCOUNT",
-                "AccountNumber",
-                "FIXED_DEPOSIT_ACCOUNT",
-                "AccountNumber");
-
-            AddRelation(
-                ds,
-                "AccountSalary",
-                "ACCOUNT",
-                "AccountNumber",
-                "SALARY_ACCOUNT",
-                "AccountNumber");
+            AddRelation(ds, "AccountSavings", "ACCOUNT", "AccountId", "SAVINGS_ACCOUNT", "AccountId");
+            AddRelation(ds, "AccountCurrent", "ACCOUNT", "AccountId", "CURRENT_ACCOUNT", "AccountId");
+            AddRelation(ds, "AccountFixedDeposit", "ACCOUNT", "AccountId", "FIXED_DEPOSIT_ACCOUNT", "AccountId");
+            AddRelation(ds, "AccountSalary", "ACCOUNT", "AccountId", "SALARY_ACCOUNT", "AccountId");
         }
 
-
-        private static void AddRelation(
-            DataSet ds,
-            string relationName,
-            string parentTable,
-            string parentColumnName,
-            string childTable,
-            string childColumnName)
+        private static void AddRelation(DataSet ds, string relationName, string parentTable, string parentColumnName, string childTable, string childColumnName)
         {
-            var parent =
-                ds.Tables[parentTable].Columns[parentColumnName];
+            var parent = ds.Tables[parentTable].Columns[parentColumnName];
+            var child = ds.Tables[childTable].Columns[childColumnName];
 
-            var child =
-                ds.Tables[childTable].Columns[childColumnName];
+            var rel = new DataRelation(relationName, parent, child, createConstraints: true);
+            ds.Relations.Add(rel);
 
-            var relation =
-                new DataRelation(
-                    relationName,
-                    parent,
-                    child,
-                    createConstraints: true);
-
-            ds.Relations.Add(relation);
-
-            relation.ChildKeyConstraint.DeleteRule = Rule.None;
-            relation.ChildKeyConstraint.UpdateRule = Rule.None;
+            // Prevent child rows without parent rows by default (enforced via Constraint)
+            rel.ChildKeyConstraint.DeleteRule = Rule.None;
+            rel.ChildKeyConstraint.UpdateRule = Rule.None;
         }
 
-
-        // =========================================================
-        // SAMPLE DATA
-        // =========================================================
-
+        // Populate sample data. Transactions and Employer entries have been removed.
         private static void PopulateSampleData(DataSet ds)
         {
             var accounts = ds.Tables["ACCOUNT"];
@@ -338,257 +174,105 @@ namespace GDB.App.Data
             var fd = ds.Tables["FIXED_DEPOSIT_ACCOUNT"];
             var salary = ds.Tables["SALARY_ACCOUNT"];
 
+            long[] accountIds = new long[12];
 
-            // -----------------------------------------------------
-            // ACCOUNT
-            // -----------------------------------------------------
+            // Helper to add an account
+            void AddAccount(
+                int index,
+                string accountNumber,
+                string name,
+                int age,
+                string accountType,
+                decimal balance,
+                string status,
+                string privilege,
+                string pin)
+            {
+                var row = accounts.NewRow();
 
-            AddAccount(
-                accounts,
-                "1000001001",
-                "Rahul Sharma",
-                25,
-                25000.75m,
-                "Savings",
-                "Active",
-                "1234",
-                "Silver");
+                row["AccountNumber"] = accountNumber;
+                row["Name"] = name;
+                row["Age"] = age;
+                row["AccountType"] = accountType;
+                row["Balance"] = Math.Round(balance, 2);
+                row["Status"] = status;
+                row["Privilege"] = privilege;
+                row["PIN"] = pin;
 
-            AddAccount(
-                accounts,
-                "1000001002",
-                "Priya Kumar",
-                30,
-                150000.00m,
-                "Savings",
-                "Active",
-                "2345",
-                "Gold");
+                accounts.Rows.Add(row);
 
-            AddAccount(
-                accounts,
-                "1000001003",
-                "Arun Kumar",
-                28,
-                5000.00m,
-                "Savings",
-                "Active",
-                "3456",
-                "Silver");
+                // Save the auto-generated AccountId
+                accountIds[index] = (long)row["AccountId"];
+            }
 
-            AddAccount(
-                accounts,
-                "1000001004",
-                "Sneha Rao",
-                32,
-                30000.00m,
-                "Savings",
-                "Active",
-                "4567",
-                "Silver");
+            // Add 12 accounts
+            AddAccount(0, "1000001001", "Customer 1", 30, "SAVINGS",
+                25000.75m, "ACTIVE", "PREMIUM", "1234");
 
+            AddAccount(1, "1000001002", "Customer 2", 35, "SAVINGS",
+                150000.00m, "ACTIVE", "GOLD", "1234");
 
-            // Current accounts
-            AddAccount(
-                accounts,
-                "1000001005",
-                "Vikram Singh",
-                40,
-                125000.00m,
-                "Current",
-                "Active",
-                "5678",
-                "Gold");
+            AddAccount(2, "1000001003", "Customer 3", 28, "SAVINGS",
+                5000.00m, "ACTIVE", "SILVER", "1234");
 
-            AddAccount(
-                accounts,
-                "1000001006",
-                "Anita Patel",
-                35,
-                50000.00m,
-                "Current",
-                "Active",
-                "6789",
-                "Gold");
+            AddAccount(3, "1000001004", "Customer 4", 40, "SAVINGS",
+                30000.00m, "ACTIVE", "SILVER", "1234");
 
-            AddAccount(
-                accounts,
-                "1000001007",
-                "Karan Mehta",
-                42,
-                75000.00m,
-                "Current",
-                "Active",
-                "7890",
-                "Gold");
+            AddAccount(4, "1000001005", "Customer 5", 45, "CURRENT",
+                125000.00m, "ACTIVE", "GOLD", "1234");
+
+            AddAccount(5, "1000001006", "Customer 6", 32, "CURRENT",
+                50000.00m, "ACTIVE", "SILVER", "1234");
+
+            AddAccount(6, "1000001007", "Customer 7", 38, "CURRENT",
+                75000.00m, "ACTIVE", "PREMIUM", "1234");
+
+            AddAccount(7, "1000001008", "Customer 8", 50, "FIXED_DEPOSIT",
+                100000.00m, "ACTIVE", "GOLD", "1234");
+
+            AddAccount(8, "1000001009", "Customer 9", 42, "FIXED_DEPOSIT",
+                200000.00m, "ACTIVE", "PREMIUM", "1234");
+
+            AddAccount(9, "1000001010", "Customer 10", 29, "SALARY",
+                35000.00m, "ACTIVE", "SILVER", "1234");
+
+            AddAccount(10, "1000001011", "Customer 11", 33, "SALARY",
+                48000.00m, "ACTIVE", "GOLD", "1234");
+
+            AddAccount(11, "1000001012", "Customer 12", 27, "SAVINGS",
+                12000.00m, "ACTIVE", "SILVER", "1234");
 
 
-            // Fixed Deposit accounts
-            AddAccount(
-                accounts,
-                "1000001008",
-                "Ravi Verma",
-                45,
-                100000.00m,
-                "FixedDeposit",
-                "Active",
-                "8901",
-                "Premium");
+            // Add specialized rows using the generated AccountIds
 
-            AddAccount(
-                accounts,
-                "1000001009",
-                "Meena Rao",
-                50,
-                200000.00m,
-                "FixedDeposit",
-                "Active",
-                "9012",
-                "Premium");
+            // Savings accounts: 0, 1, 2, 3, 11
+            savings.Rows.Add(accountIds[0], 0.035m, 500.00m, 6);
+            savings.Rows.Add(accountIds[1], 0.04m, 1000.00m, 6);
+            savings.Rows.Add(accountIds[2], 0.03m, 200.00m, 4);
+            savings.Rows.Add(accountIds[3], 0.0375m, 500.00m, 6);
+            savings.Rows.Add(accountIds[11], 0.033m, 500.00m, 4);
 
+            // Current accounts: 4, 5, 6
+            current.Rows.Add(accountIds[4], 200000.00m, 0.00m, 0.00m);
+            current.Rows.Add(accountIds[5], 50000.00m, 0.00m, 0.00m);
+            current.Rows.Add(accountIds[6], 75000.00m, 0.00m, 0.00m);
 
-            // Salary accounts
-            AddAccount(
-                accounts,
-                "1000001010",
-                "Suresh Kumar",
-                29,
-                35000.00m,
-                "Salary",
-                "Active",
-                "1122",
-                "Premium");
-
-            AddAccount(
-                accounts,
-                "1000001011",
-                "Divya Sharma",
-                31,
-                48000.00m,
-                "Salary",
-                "Active",
-                "2233",
-                "Premium");
-
-
-            // Another Savings account
-            AddAccount(
-                accounts,
-                "1000001012",
-                "Neha Kapoor",
-                27,
-                12000.00m,
-                "Savings",
-                "Active",
-                "3344",
-                "Premium");
-
-
-            // -----------------------------------------------------
-            // SAVINGS_ACCOUNT
-            // -----------------------------------------------------
-
-            savings.Rows.Add(
-                "1000001001",
-                500.00m,
-                3.5);
-
-            savings.Rows.Add(
-                "1000001002",
-                1000.00m,
-                4.0);
-
-            savings.Rows.Add(
-                "1000001003",
-                200.00m,
-                3.0);
-
-            savings.Rows.Add(
-                "1000001004",
-                500.00m,
-                3.75);
-
-            savings.Rows.Add(
-                "1000001012",
-                500.00m,
-                3.3);
-
-
-            // -----------------------------------------------------
-            // CURRENT_ACCOUNT
-            // -----------------------------------------------------
-
-            current.Rows.Add(
-                "1000001005",
-                200000.00m);
-
-            current.Rows.Add(
-                "1000001006",
-                50000.00m);
-
-            current.Rows.Add(
-                "1000001007",
-                75000.00m);
-
-
-            // -----------------------------------------------------
-            // FIXED_DEPOSIT_ACCOUNT
-            // -----------------------------------------------------
+            // Fixed deposit accounts: 7, 8
+            fd.Rows.Add(
+                accountIds[7], 100000.00m, 0.06m,
+                new DateTime(2022, 2, 1),
+                new DateTime(2023, 2, 1),
+                106000.00m, 12, false);
 
             fd.Rows.Add(
-                "1000001008",
-                12,
-                6.5);
+                accountIds[8], 200000.00m, 0.065m,
+                new DateTime(2021, 6, 10),
+                new DateTime(2024, 6, 10),
+                240000.00m, 36, true);
 
-            fd.Rows.Add(
-                "1000001009",
-                36,
-                6.5);
-
-
-            // -----------------------------------------------------
-            // SALARY_ACCOUNT
-            // -----------------------------------------------------
-
-            salary.Rows.Add(
-                "1000001010",
-                "TechCorp",
-                0);
-
-            salary.Rows.Add(
-                "1000001011",
-                "TechCorp",
-                0);
-        }
-
-
-        // =========================================================
-        // HELPER
-        // =========================================================
-
-        private static void AddAccount(
-            DataTable accounts,
-            string accountNumber,
-            string name,
-            int age,
-            decimal balance,
-            string accountType,
-            string status,
-            string pin,
-            string privilage)
-        {
-            var row = accounts.NewRow();
-
-            row["AccountNumber"] = accountNumber;
-            row["Name"] = name;
-            row["Age"] = age;
-            row["Balance"] = balance;
-            row["AccountType"] = accountType;
-            row["Status"] = status;
-            row["Pin"] = pin;
-            row["Privilage"] = privilage;
-
-            accounts.Rows.Add(row);
+            // Salary accounts: 9, 10
+            salary.Rows.Add(accountIds[9], 1, "EMP1009", 5, 50000.00m);
+            salary.Rows.Add(accountIds[10], 2, "EMP1010", 1, 60000.00m);
         }
     }
 }

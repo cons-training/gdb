@@ -1,10 +1,12 @@
-﻿namespace GDB.App.Domain.Exceptions
+using System;
+
+namespace gdb.Domain.Exceptions
 {
     /// <summary>
-    /// Purpose: Thrown when withdrawal breaches minimum balance requirement.
+    /// Purpose: Thrown when withdrawal breaches minimum _balance requirement.
     /// </summary>
-    public class MinimumBalanceViolationException : AccountException
+    public class Minimum_balanceViolationException : AccountException
     {
-        public MinimumBalanceViolationException(string message = "") : base(message) { }
+        public Minimum_balanceViolationException(string message = "") : base(message) { }
     }
 }

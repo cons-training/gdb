@@ -1,76 +1,66 @@
-﻿using GDB.App.Domain.Enums;
-using GDB.App.Domain.Models;
-namespace GDB.App.Domain;
-public class AccountFactory
+﻿using gdb.Domain.Enums;
+using gdb.Domain.Models;
+using gdb.Infrastructure.Repositories.Implementations;
+
+namespace gdb.Domain
 {
-    public static Account CreateAccount(AccountType accountType,
-                                        string accountNumber,
-                                        string name,
-                                        int age,
-                                        decimal balance,
-                                        AccountStatus status,
-                                        string pin,
-                                        AccountPrivilege privilege,
-                                        decimal overdraftLimit = 25000.0m,
-                                        int tenureMonths = 12,
-                                        double interestRate = 6.5,
-                                        decimal minBalance = 1000.0m,
-                                        string employerName = "TechCorp")
+    public static class AccountFactory
     {
-        Account userAccount = accountType switch
+        public static Account CreateAccount(
+            AccountType accountType,
+            string accountNumber,
+            string name,
+            int age,
+            decimal balance,
+            AccountStatus status,
+            AccountPrivilege privilege,
+            string pin)
         {
-            AccountType.Savings =>
-            new SavingsAccount(
-                accountNumber,
-                name,
-                age,
-                balance,
-                accountType,
-                status,
-                pin,
-                privilege,
-                minBalance,
-                interestRate),
+            switch (accountType)
+            {
+                case AccountType.SAVINGS:
+                    return new SavingsAccount(
+                        accountNumber,
+                        name,
+                        age,
+                        balance,
+                        status,
+                        privilege,
+                        pin);
 
-            AccountType.Current =>
-                new CurrentAccount(
-                    accountNumber,
-                    name,
-                    age,
-                    balance,
-                    accountType,
-                    status,
-                    pin,
-                    privilege,
-                    overdraftLimit),
+                case AccountType.CURRENT:
+                    return new CurrentAccount(
+                        accountNumber,
+                        name,
+                        age,
+                        balance,
+                        status,
+                        privilege,
+                        pin);
 
-            AccountType.Salary =>
-                new SalaryAccount(
-                    accountNumber,
-                    name,
-                    age,
-                    balance,
-                    accountType,
-                    status,
-                    pin,
-                    privilege,
-                    employerName),
+                case AccountType.FIXED_DEPOSIT:
+                    return new FixedDepositAccount(
+                        accountNumber,
+                        name,
+                        age,
+                        balance,
+                        status,
+                        privilege,
+                        pin);
 
-            AccountType.FixedDeposit =>
-                new FixedDepositAccount(
-                    accountNumber,
-                    name,
-                    age,
-                    balance,
-                    accountType,
-                    status,
-                    pin,
-                    privilege,
-                    tenureMonths,
-                    interestRate),
+                case AccountType.SALARY:
+                    return new SalaryAccount(
+                        accountNumber,
+                        name,
+                        age,
+                        balance,
+                        status,
+                        privilege,
+                        pin);
 
-            _ => throw new Exception("Invalid Account Type")
-        };
-        return userAccount;
+                default:
+                    throw new ArgumentException("Invalid account type");
+            }
+        }
     }
 }

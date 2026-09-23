@@ -1,221 +1,104 @@
-﻿
+﻿using gdb.Domain.Enums;
+using gdb.Domain.Models;
+using gdb.Domain.Exceptions;
+using gdb.Infrastructure.Repositories.Contracts;
+using gdb.Infrastructure.Repositories;
+
+
+namespace gdb.Application.Services
+{
+    internal class TransferService
+    {
+        private readonly IAccountRepository _accountRepository;
+
+        public TransferService()
+        {
+            // When TransferService is constructed, Repository is created via factory
+            _accountRepository = AccountRepositoryFactory.Create("InMemory");
+        }
+
+        /*
+         * Transfer workflow (sketch)
+         * 0. Receive fromAcc, toAcc, pin, amount
+         * 0.1 Return TransactionStatus (SUCCESS / PENDING / FAILURE)
+         * 1. Check if from account is active - else throw
+         * 2. Check if to account is active - else throw
+         * 3. Check if fromAcc pin is valid - else throw
+         * 4. Check sufficient funds / per-type rules - else throw
+         * 5. Withdraw from fromAcc
+         * 6. Deposit into toAcc
+         * 6.1 update the database (balance of the from & toaccount) 
+         * 7. Log transfer (not implemented here)
+         * 8. Return status
+         */
+
+        public TransactionStatus TransferFunds(string fromAccountNumber, string toAccountNumber, string pin, decimal amount)
+        {
+            TransactionStatus status = TransactionStatus.PENDING;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fromAccountNumber)) throw new ArgumentException("fromAccountNumber is required", nameof(fromAccountNumber));
+                if (string.IsNullOrWhiteSpace(toAccountNumber)) throw new ArgumentException("toAccountNumber is required", nameof(toAccountNumber));
+                if (string.IsNullOrWhiteSpace(pin)) throw new ArgumentException("pin is required", nameof(pin));
+                if (amount <= 0m) throw new ArgumentException("amount must be positive", nameof(amount));
+
+                var fromAccount = GetAccount(fromAccountNumber);
+                CheckIfAccountIsActive(fromAccount);
+                CheckIfPinIsValid(fromAccount, pin);
+
+                var toAccount = GetAccount(toAccountNumber);
+                CheckIfAccountIsActive(toAccount);
+
+                // Delegate debit/credit to domain objects which encapsulate rules.
+                if (fromAccountNumber == toAccountNumber)
+                    throw new ArgumentException("Cannot transfer to the same account.");
+                fromAccount.Withdraw(amount, pin);
+                toAccount.Deposit(amount);
+
+                // Persist changes via repository if required by implementation (not shown).
+                status = TransactionStatus.SUCCESS;
+            }
+            catch (InactiveAccountException)
+            {
+                status = TransactionStatus.FAILURE;
+            }
+            catch (InvalidPinException)
+            {
+                status = TransactionStatus.FAILURE;
+            }
+            catch (Exception)
+            {
+                status = TransactionStatus.FAILURE;
+            }
+
+            return status;
+        }
+
+        private bool CheckIfPinIsValid(IAccount account, string pin)
+        {
+            if (!account.Validate_pin(pin))
+                throw new InvalidPinException();
+
+            return true;
+        }
+
+        private bool CheckIfAccountIsActive(IAccount account)
+        {
+            if (account.Status != AccountStatus.ACTIVE)
+                throw new InactiveAccountException();
+
+            return true;
+        }
+
+        // SRP - to get account information only
+        private IAccount GetAccount(string accountNumber)
+        {
+            var account = _accountRepository.GetAccount(accountNumber)
+                ?? throw new InvalidOperationException($"Account '{accountNumber}' not found.");
+
+            return account;
+        }
 
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Numerics;
-//using System.Text;
-//using System.Threading.Tasks;
-//using GDB.App.Infrastructure.Repositories.Contracts;
-//using GDB.App.Domain.Models;
-//using GDB.App.Domain.Enums;
-//using GDB.App.Domain.Exceptions;
-//using GDB.App.Infrastructure.Repositories;
-
-//namespace GDB.App.Application.Services.Implementations
-//{
-//    public class TransferService
-//    {
-
-
-//        private IAccountRepository _accountRepository;
-
-
-
-//        public TransferService()
-
-//        {
-
-//            //When TRansfer Service is constructed, Repository is constructed
-//            string choice = "InMemory";
-//            _accountRepository = AccountRepositoryFactory.Create(choice);
-
-//        }
-
-
-
-//        /* 0.Recieve fromAcc, toAcc, pinNumber, amount
-
-//        * 0.1 Return TransactionStatus(it can be success or failure)
-
-//        * Add Enum TransactionStatus with success, pending and failure.
-
-//        * 1.Check if from account is active-else throw Exception
-
-//        * 2.Check if to account is active-else throw Exception
-
-//        * 3.Check if fromAcc pin is valid-else throw Exception
-
-//        * 4.Check if fromAcc has sufficient funds.-else throw Exception
-
-//        * 5.0-get dailyLimit for Transfer
-
-//        * create a seperate class PrivilegeRepository
-
-//        * create a dictionary with key-privilege and value-decimal
-
-//        * 5.Check if dailyTransferLimit has exceeded -else throw Exception
-
-//        * get Transfers done by fromAcc-it is a method-in TransactionLog.cs
-
-//        * 6.Withdraw from fromAcc-else throw Exception
-
-//        * 7.Deposit into toAcc-else throw Exception
-
-//        * 8.Log the transfer -create a seperate class-TransactionLog.cs
-
-//        * create a dictionary with key-account and value-decimal
-
-//        * 9.Return the status
-
-//        */
-
-//        public TransactionStatus TransferFunds(string fromAccountNumber, string toAccountNumber, string pin, decimal amount)
-
-//        {
-
-//            TransactionStatus status = TransactionStatus.Pending;
-
-//            try
-//            {
-
-//                // Get Account info from the database
-
-//                var fromAccount = GetAccount(fromAccountNumber);
-
-
-
-//                //Chheck if account is active
-
-//                CheckIfAccountIsActive(fromAccount);
-
-
-
-//                // Get account information for to account
-
-//                var toAccount = GetAccount(toAccountNumber);
-
-
-
-//                //Chheck if account is active
-
-//                CheckIfAccountIsActive(toAccount);
-
-
-
-//                //Check if pin is valid
-
-//                CheckIfPinIsValid(fromAccount,pin);
-//                Console.WriteLine("BEFORE TRANSFER");
-//                DisplayAccount("FROM ACCOUNT", fromAccount);
-//                DisplayAccount("TO ACCOUNT", toAccount);
-
-//                fromAccount.Withdraw(amount, pin);
-
-//                toAccount.Deposit(amount);
-//                _accountRepository.SaveAccounts(fromAccount, toAccount);
-
-//                Console.WriteLine("AFTER TRANSFER");
-//                DisplayAccount("FROM ACCOUNT", fromAccount);
-//                DisplayAccount("TO ACCOUNT", toAccount);
-//                status = TransactionStatus.Success;
-
-//            }
-
-//            catch (InactiveAccountException ex)
-//            {
-
-//                throw new InactiveAccountException();
-
-//            }
-
-//            catch (InvalidPinException ex)
-//            {
-
-//                throw new InvalidPinException();
-
-//            }
-
-
-
-
-//            return status;
-
-//        }
-
-
-
-//        private bool CheckIfPinIsValid(IAccount account, string pinNumber)
-//        {
-
-
-
-//            if (!account.ValidatePin(pinNumber)) 
-//                throw new InvalidPinException();
-
-
-
-//            return true;
-
-//        }
-
-
-
-//        private bool CheckIfAccountIsActive(IAccount account)
-//        {
-
-
-
-//            if (account.Status != AccountStatus.Active)
-//                   throw new InactiveAccountException();
-
-
-
-//            return true;
-
-//        }
-
-
-
-//        //SRP - Single Responsiblity Principle
-
-//        //To get the acount information only
-
-//        private IAccount GetAccount(string accountNumber)
-//        {
-
-//            // Get Account info from the database
-
-//            //Moment you create ab object of a class inside a method, then you are directly
-
-//            //dependent on the object. Tight Coupling
-
-//            //AccountfactoryRepository creatae method is returning an interace
-
-//            //therefore the TransferSerivce is programming to an interace and not implementation
-
-//            //Once - Use and Dispose - Uses Relationship
-
-//            //var accountRepository = AccountRepositoryFactory.Create();
-
-//            var account = _accountRepository.GetAccount(accountNumber);
-
-
-
-//            return account;
-
-//        }
-//        private void DisplayAccount(string message, IAccount account)
-//        {
-//            Console.WriteLine(message);
-//            Console.WriteLine("--------------------------------");
-//            Console.WriteLine($"Account Number : {account.AccountNumber}");
-//            Console.WriteLine($"Name           : {account.Name}");
-//            Console.WriteLine($"Balance        : {account.Balance}");
-//            Console.WriteLine();
-//        }
-
-
-
-//    }
-//}
+    }
+}
