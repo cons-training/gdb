@@ -1,75 +1,96 @@
-﻿namespace GDB.App.Presentation.UI
-{
-    public class TestAbstractAccount
-    {
-        // TODO: Implement TransferFunds(AbstractAccount from, AbstractAccount to, decimal amount, string pin)
-        //public static void TransferFunds(Account fromAcc, Account toAcc, decimal amount, string pin)
-        //{
-        //    // TODO: Execute transfer workflow
-        //    try
-        //    {
-        //        fromAcc.Withdraw(amount, pin);
+﻿using System;
+using gdb.Data;
+using gdb.Domain;
+using gdb.Domain.Enums;
+using gdb.Domain.Exceptions;
+using gdb.Domain.Models;
+using gdb.Infrastructure.Repositories.Implementations;
+using System.Data;
+using gdb.Presentation;
 
-        //        toAcc.Deposit(amount);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        System.Console.WriteLine($"Fund Transfer Failed: {ex.Message}");
-        //    }
-        //}
+namespace gdb
+{
+    public class TestAccount
+    {
+
+        public static bool TransferFunds(
+            Account fromAcc,
+            Account toAcc,
+            decimal amount,
+            string pin)
+        {
+            try
+            {
+                fromAcc.Withdraw(amount, pin);
+                toAcc.Deposit(amount);
+
+                return true;
+            }
+            catch (AccountException ex)
+            {
+                Console.WriteLine($"Transfer failed: {ex.Message}");
+                return false;
+            }
+        }
 
         public static void Main(string[] args)
         {
-            //    Console.WriteLine("=== Activity 10: Abstract Classes & Template Method Tests ===");
 
-            //    //AbstractAccount savings = new SavingsAccount("S001","Vishnu",25,10000.0m,"ACTIVE","1234" );
+            var ds = AccountStore.CreateDataSet();
 
-            //    //AbstractAccount current = new CurrentAccount( "C001", "Vishnu", 25,50000.0m, "ACTIVE", "5678" );
+            Console.WriteLine("=== DATASET CREATED: " + ds.DataSetName + " ===");
+            ListTables(ds);
 
-            //    //AbstractAccount fixedDeposit = new FixedDepositAccount("F001","Vishnu", 25, 20000.0m, "ACTIVE", "9999" );
+            Console.WriteLine();
+            PrintTableSchema(ds.Tables["ACCOUNT"]);
 
-            //    try
-            //    {
-            //        var savings = AccountFactory.CreateAccount(AccountType.Savings, "S001", "Vishnu", 25, 10000.0m, AccountStatus.Active, "1234", AccountPrivilege.Premium);
+            Console.WriteLine();
+            Console.WriteLine("=== SAMPLE QUERIES / OPERATIONS ===");
 
-
-            //        var current = AccountFactory.CreateAccount(AccountType.Current, "C001", "Vishnu", 25, 50000.0m, AccountStatus.Active, "5678", AccountPrivilege.Premium);
-
-            //        var fixedDeposit = AccountFactory.CreateAccount(AccountType.FixedDeposit, "F001", "Vishnu", 25, 20000.0m, AccountStatus.Active, "9999", AccountPrivilege.Premium);
-
-            //        Account[] portfolio = { savings, current, fixedDeposit };
-
-            //        // TODO: Step 1 - Test Template Method Withdrawal on Savings Account
-
-            //        savings.Withdraw(1000.0m, "1234");
-            //        Console.WriteLine("Savings Account Withdraw Successful");
+            // List first 5 account rows
+            Console.WriteLine("\n-- Accounts (first 5) --");
+            PrintRows(ds.Tables["ACCOUNT"], 5);
 
 
-            //        // TODO: Step 2 - Test Template Method Withdrawal on Current Account Overdraft
+            void ListTables(DataSet ds)
+            {
+                Console.WriteLine("Tables in DataSet:");
+                foreach (DataTable t in ds.Tables)
+                {
+                    Console.WriteLine($"- {t.TableName} (Rows: {t.Rows.Count})");
+                }
+            }
 
-            //        current.Withdraw(2000.0m, "5678");
-            //        Console.WriteLine("Current Account Withdraw Successful");
+            void PrintTableSchema(DataTable table)
+            {
+                Console.WriteLine($"Schema for {table.TableName}:");
+                foreach (DataColumn c in table.Columns)
+                {
+                    Console.WriteLine($"  {c.ColumnName} ({c.DataType.Name}) AllowNull={c.AllowDBNull} MaxLen={c.MaxLength}");
+                }
+            }
 
-            //        // TODO: Step 3 - Test Template Method Withdrawal on Fixed Deposit Block
+            void PrintRows(DataTable table, int maxRows = int.MaxValue)
+            {
+                int count = 0;
+                foreach (DataRow r in table.Rows)
+                {
+                    PrintRow(r);
+                    if (++count >= maxRows) break;
+                }
+            }
 
-            //        fixedDeposit.Withdraw(3000.0m, "9999");
-            //        Console.WriteLine("Fixed Deposit Account Withdraw Successful");
+            void PrintRow(DataRow? row)
+            {
+                if (row == null)
+                {
+                    Console.WriteLine("  <null>");
+                    return;
+                }
 
-
-            //        // TODO: Step 4 - Test Inter-Account Fund Transfer
-
-            //        TransferFunds(current, savings, 10000.0m, "5678");
-            //        Console.WriteLine("Fund Transfer Successful");
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Console.WriteLine(e.Message);
-            //    }
-
-            //    Console.WriteLine("All abstract account unit tests executed!");
-
-
-
+                var values = row.Table.Columns.Cast<DataColumn>().Select(c => $"{c.ColumnName}={row[c]}");
+                Console.WriteLine("  " + string.Join(", ", values));
+            }
 
             new Home().Start();
         }

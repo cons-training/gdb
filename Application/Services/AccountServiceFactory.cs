@@ -1,13 +1,12 @@
-﻿using GDB.App.Application.Services.Contracts;
-using GDB.App.Application.Services.Implementations;
+﻿using gdb.Application.Services.Implementations;
 
-namespace GDB.App.Application.Services
+namespace gdb.Application.Services
 {
-    internal class AccountServiceFactory
-    {
-        public static IAccountService Create()
-        {
-            return new AccountService();
-        }
-    }
+	public class AccountServiceFactory
+	{
+		public static AccountService Create()
+		{
+			return new AccountService();
+		}
+	}
 }
