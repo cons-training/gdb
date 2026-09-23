@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using gdb.Domain.Enums;
-using gdb.Domain.Exceptions;
+﻿using GDB.App.Domain.Enums;
+using GDB.App.Domain.Exceptions;
 
-namespace gdb.Domain.Models
+namespace GDB.App.Domain.Models
 {
-    public abstract class Account:IAccount
+    public abstract class Account : IAccount
     {
+        // TODO: Declare protected fields:
+        // accountNumber (string), name (string), age (int), balance (decimal), accountType (string), status (string), pin (string)
         protected string _accountNumber;
         protected string _name;
         protected int _age;
@@ -19,11 +16,9 @@ namespace gdb.Domain.Models
         protected string _pin;
         protected AccountPrivilege _privilege;
 
-        public Account(string accountNumber, string name, int age, decimal balance, AccountType accountType, AccountStatus status, AccountPrivilege privilege, string pin)
+        public Account(string accountNumber, string name, int age, decimal balance, AccountType accountType, AccountStatus status, string pin, AccountPrivilege privilege)
         {
-            if (age < 18) throw new ArgumentException("age must be >= 18");
-            if (balance < 0.0m) throw new ArgumentException("balance cannot be negative");
-            if (pin == null || pin.Length != 4) throw new ArgumentException("pin must be 4 digits");
+            // TODO: Initialize instance variables with parameters and validate input rules
             this._accountNumber = accountNumber;
             this._name = name;
             this._age = age;
@@ -34,36 +29,54 @@ namespace gdb.Domain.Models
             this._privilege = privilege;
         }
 
-        public bool Validate_pin(string entered_pin) => _pin != null && _pin == entered_pin;
-
-        public bool Change_pin(string old_pin, string new_pin)
+        public bool ValidatePin(string enteredPin)
         {
-            if (!Validate_pin(old_pin)) return false;
-            if (new_pin == null || new_pin.Length != 4) return false;
-            _pin = new_pin;
+            // TODO: Validate PIN logic
+            if (_pin == enteredPin)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool ChangePin(string oldPin, string newPin)
+        {
+            // TODO: Change PIN logic
+            if (_pin != oldPin)
+            {
+                return false;
+            }
+            else if (newPin.Length != 4)
+            {
+                return false;
+            }
+            _pin = newPin;
             return true;
         }
 
         public void Deposit(decimal amount)
         {
-            if (amount <= 0.0m) throw new InvalidAmountException("Deposit amount must be positive");
+            // TODO: Validate positive amount and add to balance
+            if (amount <= 0.0m) throw new InvalidAmountException("Deposit must be positive");
             _balance += amount;
         }
 
-        public void Withdraw(decimal amount, string entered_pin)
+        // 1. Validate entered PIN (throw InvalidPinException if incorrect).
+        // 2. Validate account status == "ACTIVE" (throw InactiveAccountException if not).
+        // 3. Validate positive amount (throw InvalidAmountException if amount <= 0).
+        // 4. Delegate to abstract ProcessDebit(amount).
+        public void Withdraw(decimal amount, string enteredPin)
         {
-            if (!Validate_pin(entered_pin)) throw new InvalidPinException("Invalid _pin");
-            if (_status != AccountStatus.ACTIVE) throw new InactiveAccountException("Account is not active");
-            if (amount <= 0.0m) throw new InvalidAmountException("Withdrawal amount must be positive");
+            if (!ValidatePin(enteredPin)) throw new InvalidPinException("Invalid PIN");
+            if (Enums.AccountStatus.Active != _status) throw new InactiveAccountException("Account is not active");
+            if (amount <= 0.0m) throw new InvalidAmountException("Withdrawal must be positive");
             ProcessDebit(amount);
+
         }
 
+        // TODO: Declare abstract primitive method to be implemented by each subclass:
         public abstract void ProcessDebit(decimal amount);
 
-        public void DisplayAccountInfo()
-        {
-            Console.WriteLine($"Account Number: {_accountNumber} | _name: {_name} | _balance: Rs {_balance:F2}");
-        }
 
         public string AccountNumber => _accountNumber;
         public string Name => _name;
@@ -71,6 +84,7 @@ namespace gdb.Domain.Models
         public decimal Balance => _balance;
         public AccountType AccountType => _accountType;
         public AccountStatus Status => _status;
+
         public AccountPrivilege Privilege => _privilege;
     }
 }

@@ -1,40 +1,35 @@
-﻿using System;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using gdb.Domain.Enums;
-using gdb.Domain.Exceptions;
+﻿using GDB.App.Domain.Enums;
+using GDB.App.Domain.Exceptions;
 
-namespace gdb.Domain.Models
+
+namespace GDB.App.Domain.Models
 {
     public class SalaryAccount : Account
     {
-        private string _employer_name;
+        private string _employerName;
         private int _inactiveMonths;
 
-        public SalaryAccount(string accountNumber, string name, int age, decimal balance, AccountStatus status, AccountPrivilege privilege, string pin, string employer_name = "TechCorp")
-            : base(accountNumber, name, age, balance, Enums.AccountType.SALARY, status, privilege, pin)
+        public SalaryAccount(string accountNumber, string name, int age, decimal balance, AccountType accountType, AccountStatus status, string pin, AccountPrivilege privilege, string employerName = "TechCorp")
+            : base(accountNumber, name, age, balance, accountType, status, pin, privilege)
         {
-            this._employer_name = employer_name;
-            _inactiveMonths = 0;
+            this._employerName = employerName;
+            this._inactiveMonths = 0;
         }
 
         public override void ProcessDebit(decimal amount)
         {
             if (amount > _balance)
-                throw new Insufficient_balanceException("Insufficient funds in Salary account");
+                throw new InsufficientBalanceException("Insufficient funds in Salary account");
             _balance -= amount;
         }
 
         public void IncrementInactiveMonths()
         {
             _inactiveMonths++;
-            if (_inactiveMonths >= 3) _status = AccountStatus.FROZEN;
+            if (_inactiveMonths >= 3) _status = Enums.AccountStatus.Frozen;
         }
 
-        public string Employer_name => _employer_name;
+        public string EmployerName => _employerName;
         public int InactiveMonths => _inactiveMonths;
     }
 }

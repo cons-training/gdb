@@ -1,6 +1,4 @@
-using System;
-
-namespace gdb.Domain.Exceptions
+﻿namespace GDB.App.Domain.Exceptions
 {
     /// <summary>
     /// Purpose: Thrown when an operation is attempted on an inactive account.

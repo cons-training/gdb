@@ -1,43 +1,65 @@
-﻿using gdb.Application.Services;
-using gdb.Application.Services.Implementations;
-using gdb.Domain.Models;
-using gdb.Infrastructure.Repositories.Contracts;
-using gdb.Infrastructure.Repositories.Implementations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GDB.App.Application.Dtos;
+using GDB.App.Application.Services;
+using GDB.App.Application.Services.Contracts;
+using GDB.App.Domain.Models;
 
-namespace gdb.Application.Controllers
+namespace GDB.App.Application.Controllers
 {
     internal class AccountController
     {
         private IAccountService _accountService;
-        private IAccountRepository _accountRepository;
         public AccountController()
         {
             _accountService = AccountServiceFactory.Create();
-            _accountRepository = new AccountRepositoryInMemory();
         }
-        
+
         //Boundary Class 
         public IAccount GetAccount(string accNo)
         {
-            if (string.IsNullOrEmpty(accNo))
-            {
-                throw new ArgumentException("Account number cannot be null or empty.", nameof(accNo));
-            }
 
-            IAccount account =  _accountService.GetAccount(accNo);
+            IAccount account = null;
+
+            //Controller->Service
+            account = _accountService.GetAccount(accNo);
+
+
             return account;
         }
-
-        public List<IAccount> GetAllAccounts()
+        public List<ViewAllAccountsResponseDto> GetAllAccounts()
         {
-             List<IAccount> accounts = _accountRepository.GetAllAccounts();
-            return accounts;
+            return _accountService.GetAllAccounts();
+        }
+
+        public ChangePinResponseDto ChangePin(ChangePinRequestDto request)
+        {
+            _accountService.ChangePin(request.AccountNumber, request.OldPin, request.NewPin);
+
+            return new ChangePinResponseDto()
+            {
+                AccountNumber = request.AccountNumber,
+                Success = true,
+                Message = "PIN changed successfully."
+            };
+        }
+
+        public ViewBalanceResponseDto GetBalance(string accNo)
+        {
+            return _accountService.GetBalance(accNo);
+        }
+        public ViewAccountResponseDto ViewAccount(string accNo)
+        {
+            return _accountService.ViewAccount(accNo);
+        }
+
+
+        public CreateAccountResponseDto CreateAccount(CreateAccountRequestDto request)
+        {
+            return _accountService.CreateAccount(request);
+        }
+
+        public CloseAccountResponseDto CloseAccount(CloseAccountRequestDto request)
+        {
+            return _accountService.CloseAccount(request);
         }
     }
 }
-    

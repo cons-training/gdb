@@ -1,133 +1,537 @@
-﻿using gdb.Application.Controllers;
-using gdb.Application.Services;
-using gdb.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GDB.App.Application.Controllers;
+using GDB.App.Application.Dtos;
+using GDB.App.Domain.Enums;
 
-namespace gdb.Presentation
+namespace GDB.App.Presentation.UI
 {
-    internal class Home
+    public class Home
     {
+        int choice;
         public void Start()
         {
-            Console.WriteLine("Welcome to GDB");
+            choice = -1;
 
-            Console.WriteLine("1. Create Account\n2. View Account" +
-                "\n3. View All Accounts\n4. View Balance" +
-                "\n5. View Recent Transactions\n6. Withdraw" +
-                "\n7. Deposit\n8. Transfer Funds\n9.Change Pin" +
-                "\n0. Exit");
-            Console.WriteLine("Enter your choice");
-            int choice = int.Parse(Console.ReadLine());
-            switch (choice)
+            while (choice != 0)
             {
-                case 1:
-                    CreateAccount();
-                    break;
-                case 2:
-                    ViewAccount();
-                    break;
-                case 3:
-                    ViewAllAccounts();
-                    break;
-                case 4:
-                    ViewBalance();
-                    break;
-                case 5:
-                    ViewRecentTransactions();
-                    break;
-                case 6:
-                    Withdraw();
-                    break;
-                case 7:
-                    Deposit();
-                    break;
-                case 8:
-                    TransferFunds();
-                    break;
-                case 9:
-                    ChangePin();
-                    break;
-                case 0:
-                    Exit();
-                    break;
-                default: break;
+                Console.WriteLine();
+                Console.WriteLine("Welcome to GDB");
+                Console.WriteLine("1. Create Account\n" +
+                    "2. View Account\n" +
+                    "3. View All Accounts\n" +
+                    "4. View Balance\n" +
+                    "5. View Recent Transactions\n" +
+                    "6. Withdraw\n" +
+                    "7. Deposit\n" +
+                    "8. Transfer Funds\n" +
+                    "9. Close Account\n" +
+                    "10. Change PIN\n" +
+                    "0. Exit");
 
+                Console.WriteLine("Enter Your Choice.");
+                choice = int.Parse(Console.ReadLine());
+
+                switch (choice)
+                {
+                    case 1:
+                        CreateAccount();
+                        break;
+
+                    case 2:
+                        ViewAccount();
+                        break;
+
+                    case 3:
+                        ViewAllAccounts();
+                        break;
+
+                    case 4:
+                        ViewBalance();
+                        break;
+
+                    case 5:
+                        ViewRecentTransactions();
+                        break;
+
+                    case 6:
+                        Withdraw();
+                        break;
+
+                    case 7:
+                        Deposit();
+                        break;
+
+                    case 8:
+                        TransferFunds();
+                        break;
+
+                    case 9:
+                        CloseAccount();
+                        break;
+
+                    case 10:
+                        ChangePin();
+                        break;
+
+                    case 0:
+                        Exit();
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid choice. Please try again.");
+                        break;
+                }
             }
-        }
 
+
+
+        }
         public void CreateAccount()
         {
+            AccountController controller = new AccountController();
+
+            Console.WriteLine("===== CREATE ACCOUNT =====");
+
+            Console.Write("Enter Account Number: ");
+            string accountNumber = Console.ReadLine()!;
+
+            Console.Write("Enter Name: ");
+            string name = Console.ReadLine()!;
+
+            Console.Write("Enter Age: ");
+            int age = Convert.ToInt32(Console.ReadLine());
+
+            Console.Write("Enter Initial Balance: ");
+            decimal balance = Convert.ToDecimal(Console.ReadLine());
+
+            Console.Write("Enter PIN: ");
+            string pin = Console.ReadLine()!;
+
+            Console.WriteLine("Select Account Type:");
+            Console.WriteLine("1. Savings");
+            Console.WriteLine("2. Current");
+            Console.WriteLine("3. Fixed Deposit");
+            Console.WriteLine("4. Salary");
+
+            Console.Write("Enter Choice: ");
+            int typeChoice = Convert.ToInt32(Console.ReadLine());
+
+            AccountType accountType;
+
+            switch (typeChoice)
+            {
+                case 1:
+                    accountType = AccountType.Savings;
+                    break;
+
+                case 2:
+                    accountType = AccountType.Current;
+                    break;
+
+                case 3:
+                    accountType = AccountType.FixedDeposit;
+                    break;
+
+                case 4:
+                    accountType = AccountType.Salary;
+                    break;
+
+                default:
+                    throw new Exception("Invalid account type.");
+            }
+
+            Console.Write("Enter Privilege (Premium/Gold/Silver): ");
+            string privilegeInput = Console.ReadLine()!;
+
+            AccountPrivilege privilege =
+                (AccountPrivilege)Enum.Parse(
+                    typeof(AccountPrivilege),
+                    privilegeInput,
+                    true);
+
+            // Default account-specific values
+            decimal overdraftLimit = 25000m;
+            int tenureMonths = 12;
+            double interestRate = 6.5;
+            decimal minimumBalance = 1000m;
+            string employerName = "TechCorp";
+            AccountStatus status = AccountStatus.Active;
+
+            if (accountType == AccountType.Current)
+            {
+                Console.Write("Enter Overdraft Limit: ");
+                overdraftLimit = Convert.ToDecimal(Console.ReadLine());
+            }
+            else if (accountType == AccountType.FixedDeposit)
+            {
+                Console.Write("Enter Tenure Months: ");
+                tenureMonths = Convert.ToInt32(Console.ReadLine());
+
+                Console.Write("Enter Interest Rate: ");
+                interestRate = Convert.ToDouble(Console.ReadLine());
+            }
+            else if (accountType == AccountType.Savings)
+            {
+                Console.Write("Enter Minimum Balance: ");
+                minimumBalance = Convert.ToDecimal(Console.ReadLine());
+
+                Console.Write("Enter Interest Rate: ");
+                interestRate = Convert.ToDouble(Console.ReadLine());
+            }
+            else if (accountType == AccountType.Salary)
+            {
+                Console.Write("Enter Employer Name: ");
+                employerName = Console.ReadLine()!;
+            }
+
+            // ============================================================
+            // CREATE REQUEST DTO
+            // ============================================================
+
+            CreateAccountRequestDto request = new CreateAccountRequestDto()
+            {
+                AccountNumber = accountNumber,
+                Name = name,
+                Age = age,
+                Balance = balance,
+                Pin = pin,
+                AccountType = accountType,
+                Status = status,
+                Privilege = privilege,
+                OverdraftLimit = overdraftLimit,
+                TenureMonths = tenureMonths,
+                InterestRate = interestRate,
+                MinimumBalance = minimumBalance,
+                EmployerName = employerName
+            };
+
+            // ============================================================
+            // SEND REQUEST DTO TO CONTROLLER
+            // AND RECEIVE RESPONSE DTO
+            // ============================================================
+
+            CreateAccountResponseDto response =
+                controller.CreateAccount(request);
+
+            // ============================================================
+            // DISPLAY RESPONSE DTO
+            // ============================================================
+
+            Console.WriteLine();
+            Console.WriteLine("===== ACCOUNT CREATED SUCCESSFULLY =====");
+
+            Console.WriteLine($"Account Number : {response.AccountNumber}");
+            Console.WriteLine($"Name           : {response.Name}");
+            Console.WriteLine($"Account Type   : {response.AccountType}");
+            Console.WriteLine($"Balance        : {response.Balance:F2}");
+            Console.WriteLine($"Status         : {response.Status}");
+            Console.WriteLine($"Privilege      : {response.Privilege}");
 
         }
+
+
         public void ViewAccount()
         {
-            //Accept account Number ot get the account info
-            Console.WriteLine("Enter The Account Number: ");
-            string accNo = Console.ReadLine() ?? string.Empty;
+            //Accept accNo to get the accountInfo
+            Console.WriteLine("Enter the account number.");
+            string accNo = Console.ReadLine();
 
-            //Contact the DB to get the Account Info
-            var account = new AccountController().GetAccount(accNo!);
+            //Contact the database to get the accountInfo
+            //UI->controller
+            ViewAccountResponseDto account = new AccountController().ViewAccount(accNo);
+            //Display the accountInfo
 
-            //Display the Account Info
-            Console.WriteLine("Name: " + account.Name);
+            if (account == null)
+            {
+                Console.WriteLine("Account not found.");
+                return;
+            }
 
+            Console.WriteLine();
+            Console.WriteLine("Account Number : " + account.AccountNumber);
+            Console.WriteLine("Name           : " + account.Name);
+            Console.WriteLine("Balance        : " + account.Balance);
         }
         public void ViewAllAccounts()
         {
-            Console.WriteLine("View All Accounts");
-            var accounts = new AccountController().GetAllAccounts();
+            AccountController controller = new AccountController();
+
+            var accounts = controller.GetAllAccounts();
+
+            Console.WriteLine();
+            Console.WriteLine("All Accounts");
+            Console.WriteLine("----------------------------");
+
             foreach (var account in accounts)
             {
-                Console.WriteLine("Account Number: " + account.AccountNumber + ", Name: " + account.Name);
+                Console.WriteLine("Account Type   : " + account.AccountType);
+                Console.WriteLine("Account Number : " + account.AccountNumber);
+                Console.WriteLine("Name           : " + account.Name);
+                Console.WriteLine("Age            : " + account.Age);
+                Console.WriteLine("Balance        : " + account.Balance);
+                Console.WriteLine("Status         : " + account.AccountStatus);
+                Console.WriteLine("Privilege      : " + account.AccountPrivilege);
             }
         }
         public void ViewBalance()
         {
-              Console.WriteLine("Enter The Account Number: ");
-            string accNo = Console.ReadLine() ?? string.Empty;
+            Console.WriteLine("Enter Account Number:");
+            string accountNumber = Console.ReadLine();
 
-            //Contact the DB to get the Account Info
-            var account = new AccountController().GetAccount(accNo!);
-            Console.WriteLine("Name: " + account.Name + ", Balance: " + account.Balance);
+            AccountController controller = new AccountController();
+
+            ViewBalanceResponseDto account = controller.GetBalance(accountNumber);
+
+            if (account == null)
+            {
+                Console.WriteLine("Account not found.");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Balance        : " + account.Balance);
+
+
         }
         public void ViewRecentTransactions()
         {
-            Console.WriteLine("View Recent Transactions");
-            
+            Console.WriteLine();
+            Console.WriteLine("===== VIEW RECENT TRANSACTIONS =====");
+
+            Console.Write("Enter Account Number: ");
+            string accountNumber = Console.ReadLine()!;
+
+            try
+            {
+                TransactionController controller =
+                    new TransactionController();
+
+                List<ViewRecentTransactionsResponseDto> transactions =
+                    controller.GetRecentTransactions(accountNumber);
+
+                if (transactions.Count == 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("No transactions found.");
+                    return;
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("===== RECENT TRANSACTIONS =====");
+
+                foreach (ViewRecentTransactionsResponseDto transaction
+                         in transactions)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("-------------------------------");
+
+                    Console.WriteLine(
+                        $"Transaction ID   : {transaction.TransactionId}");
+
+                    Console.WriteLine(
+                        $"From Account     : {transaction.FromAccountNumber ?? "N/A"}");
+
+                    Console.WriteLine(
+                        $"To Account       : {transaction.ToAccountNumber ?? "N/A"}");
+
+                    Console.WriteLine(
+                        $"Transaction Type : {transaction.TransactionType}");
+
+                    Console.WriteLine(
+                        $"Amount           : {transaction.Amount:F2}");
+
+                    Console.WriteLine(
+                        $"Status           : {transaction.TransactionStatus}");
+
+                    Console.WriteLine(
+                        $"Timestamp        : {transaction.Timestamp}");
+
+                    if (transaction.BalanceAfterFrom.HasValue)
+                    {
+                        Console.WriteLine(
+                            $"Balance After From : {transaction.BalanceAfterFrom:F2}");
+                    }
+
+                    if (transaction.BalanceAfterTo.HasValue)
+                    {
+                        Console.WriteLine(
+                            $"Balance After To   : {transaction.BalanceAfterTo:F2}");
+                    }
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
         public void Withdraw()
         {
+            Console.WriteLine("Enter Account Number:");
+            string accountNumber = Console.ReadLine();
+
+            Console.WriteLine("Enter PIN:");
+            string pin = Console.ReadLine();
+
+            Console.WriteLine("Enter Amount:");
+            decimal amount = decimal.Parse(Console.ReadLine());
+
+            try
+            {
+                TransactionController controller =
+                    new TransactionController();
+
+                var account = controller.Withdraw(
+                    accountNumber,
+                    pin,
+                    amount
+                );
+
+                Console.WriteLine("Balance: " + account.Balance);
+                Console.WriteLine("Status: " + account.TransactionStat);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
         }
         public void Deposit()
         {
+            Console.WriteLine("Enter Account Number:");
+            string accountNumber = Console.ReadLine();
 
+            Console.WriteLine("Enter Amount:");
+            decimal amount = decimal.Parse(Console.ReadLine());
+
+            try
+            {
+                TransactionController controller =
+                    new TransactionController();
+
+                var account = controller.Deposit(accountNumber, amount);
+
+                Console.WriteLine("Balance: " + account.Balance);
+                Console.WriteLine("Status: " + account.TransactionStat);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         public void TransferFunds()
         {
-            TransferService transferService = new TransferService();
-            Console.WriteLine("Enter the source account number: ");
-            string sourceAccountNumber = Console.ReadLine() ?? string.Empty;
-            Console.WriteLine("Enter the destination account number: ");
-            string destinationAccountNumber = Console.ReadLine() ?? string.Empty;
-            Console.WriteLine("Enter the amount to transfer: ");
-            decimal amount = decimal.Parse(Console.ReadLine() ?? "0");
-            Console.WriteLine("Enter PIN for the source account: ");
-            string pin = Console.ReadLine() ?? string.Empty;
-            TransactionStatus x = transferService.TransferFunds(sourceAccountNumber, destinationAccountNumber,pin, amount);
-        }
-        public void ChangePin()
-        {
+            Console.WriteLine("Enter From Account Number:");
+            string fromAccountNumber = Console.ReadLine();
 
+            Console.WriteLine("Enter To Account Number:");
+            string toAccountNumber = Console.ReadLine();
+
+            Console.WriteLine("Enter PIN:");
+            string pin = Console.ReadLine();
+
+            Console.WriteLine("Enter Amount:");
+            decimal amount = decimal.Parse(Console.ReadLine());
+
+            try
+            {
+                TransactionController controller =
+                    new TransactionController();
+
+                var result =
+                    controller.TransferFunds(
+                        fromAccountNumber,
+                        toAccountNumber,
+                        pin,
+                        amount
+                    );
+
+                Console.WriteLine();
+
+                Console.WriteLine($"Transaction Status: {result.TransactionStat}");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        public void CloseAccount()
+        {
+            Console.WriteLine("===== CLOSE ACCOUNT =====");
+
+            Console.Write("Enter Account Number: ");
+            string accountNumber = Console.ReadLine()!;
+
+            try
+            {
+                CloseAccountRequestDto request =
+                    new CloseAccountRequestDto()
+                    {
+                        AccountNumber = accountNumber
+                    };
+
+                AccountController controller = new AccountController();
+
+                CloseAccountResponseDto response = controller.CloseAccount(request);
+
+                Console.WriteLine();
+                Console.WriteLine("===== ACCOUNT CLOSED =====");
+                Console.WriteLine($"Account Number : {response.AccountNumber}");
+                Console.WriteLine($"Status         : {response.Status}");
+                Console.WriteLine($"Message        : {response.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
         public void Exit()
         {
+            Console.WriteLine("Thank you for using GDB.");
+            choice = 0;
+        }
 
+        public void ChangePin()
+        {
+            Console.WriteLine("===== CHANGE PIN =====");
+
+            Console.Write("Enter Account Number: ");
+            string accountNumber = Console.ReadLine();
+
+            Console.Write("Enter Current PIN: ");
+            string oldPin = Console.ReadLine();
+
+            Console.Write("Enter New PIN: ");
+            string newPin = Console.ReadLine();
+
+            try
+            {
+                AccountController controller = new AccountController();
+
+                ChangePinRequestDto request = new ChangePinRequestDto()
+                {
+                    AccountNumber = accountNumber,
+                    OldPin = oldPin,
+                    NewPin = newPin
+                };
+
+                ChangePinResponseDto response = controller.ChangePin(request);
+
+                Console.WriteLine();
+                Console.WriteLine("===== CHANGE PIN RESULT =====");
+                Console.WriteLine($"Account Number : {response.AccountNumber}");
+                Console.WriteLine($"Success        : {response.Success}");
+                Console.WriteLine($"Message        : {response.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
     }
 }
-// introduce transaction service which has withdraw, deposit, transfer
+
+
